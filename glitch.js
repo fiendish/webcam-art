@@ -33,6 +33,7 @@ function main() {
    var framebufctx = framebuf.getContext('2d');
    var numTimes = 0;
    var last_vectors;
+   var zoneSize = 16;
 
    // wait for the video to start playing so that we can see 
    // what dimensions the camera has
@@ -42,6 +43,7 @@ function main() {
          framebuf.height = video.videoHeight;
          canvas.width = video.videoWidth;
          canvas.height = video.videoHeight;
+         zoneSize = Math.floor(canvas.width/40);
       } else if (numTimes < 30) {
          numTimes++;
          setTimeout(matchVideoSize, 100);
@@ -56,7 +58,6 @@ function main() {
    };
    video.addEventListener('playing', matchVideoSize, false);
 
-   var zoneSize = 16;
    var prev_vectors = null;
    var webCamFlow = new oflow.WebCamFlow(video, zoneSize);
 
@@ -125,7 +126,7 @@ function main() {
 
       var xLoc, yLoc;
       var numsteps, step_u, step_v;
-      var threshold = 8;
+      var threshold = Math.floor(zoneSize/2);
       for(var i = 0; i != last_vectors.length; i++)
       {
          xLoc = last_vectors[i].x;

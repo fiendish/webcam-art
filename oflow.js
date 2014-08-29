@@ -1,4 +1,7 @@
 /*
+ * @licstart  The following is the entire license notice for the 
+ *  JavaScript code in this page.
+ *
  * Copyright (c) 2013 Andrei Kashcha (anvaka@gmail.com)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this 
@@ -16,6 +19,10 @@
  * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
+ *
+ * @licend  The above is the entire license notice
+ * for the JavaScript code in this page.
+ *
  */
 
 /*

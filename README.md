@@ -1,8 +1,8 @@
 webcam-art
 ==========
 
-Requires a webcam. And probably requires Chrome.
+Requires a webcam. And probably requires Chrome on a real computer.
 
-Totally janks my phone, though, so maybe don't bother trying on mobile.
+Totally janks up my phone and Firefox on my laptop.
 
 http://fiendish.github.io/webcam-art/

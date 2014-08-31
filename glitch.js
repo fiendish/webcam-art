@@ -43,8 +43,8 @@ function main() {
       // smooth the motion a bit
       if (prev_vectors != null) {
          for (var i = 0; i < last_vectors.length; ++i) {
-            last_vectors[i].x = (last_vectors[i].x + prev_vectors[i].x)/2;
-            last_vectors[i].y = (last_vectors[i].y + prev_vectors[i].y)/2;
+            last_vectors[i].u = (last_vectors[i].u + prev_vectors[i].u)/2;
+            last_vectors[i].v = (last_vectors[i].v + prev_vectors[i].v)/2;
          }
       }
       prev_vectors = JSON.parse(JSON.stringify(last_vectors));

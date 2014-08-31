@@ -445,7 +445,7 @@ return {
  *  flow.stopCapture();
  */
  
-function WebCamFlow(defaultVideoTag, zoneSize) {
+function WebCamFlow(defaultVideoTag, zoneSize, fallBack) {
     var videoTag,
         isCapturing,
         localStream,
@@ -453,7 +453,9 @@ function WebCamFlow(defaultVideoTag, zoneSize) {
         flowCalculatedCallback,
         videoFlow,
         onWebCamFail = function onWebCamFail(e) {
-            if(e.code === 1){
+            if (fallBack) {
+               fallBack();
+            } else if(e.code === 1){
                 window.alert('You have denied access to your camera. I cannot do anything.');
             } else { 
                 window.alert('getUserMedia() is not supported in your browser.');

@@ -34,34 +34,10 @@ function main() {
    var numTimes = 0;
    var last_vectors;
    var zoneSize = 16;
-
-   // wait for the video to start playing so that we can see 
-   // what dimensions the camera has
-   var matchVideoSize = function() {
-      if (video.videoHeight != 0 && video.videoWidth != 0) {
-         framebuf.width = video.videoWidth;
-         framebuf.height = video.videoHeight;
-         canvas.width = video.videoWidth;
-         canvas.height = video.videoHeight;
-         zoneSize = Math.floor(canvas.width/40);
-      } else if (numTimes < 30) {
-         numTimes++;
-         setTimeout(matchVideoSize, 100);
-         return;
-      } else {
-         framebuf.width = 640;
-         framebuf.height = 480;
-         canvas.width = 640;
-         canvas.height = 480;
-      }
-      video.removeEventListener('playing', matchVideoSize, false);
-   };
-   video.addEventListener('playing', matchVideoSize, false);
-
    var prev_vectors = null;
-   var webCamFlow = new oflow.WebCamFlow(video, zoneSize);
+   var flow;
 
-   webCamFlow.onCalculated( function (direction) {
+   function handleVectors (direction) {
       last_vectors = direction.zones;
 
       // smooth the motion a bit
@@ -87,15 +63,48 @@ function main() {
          ctx.stroke();
       }
       */
-   });
+   }
+
+   // wait for the video to start playing so that we can see 
+   // what dimensions the camera has
+   var matchVideoSize = function() {
+      if (video.videoHeight != 0 && video.videoWidth != 0) {
+         framebuf.width = video.videoWidth;
+         framebuf.height = video.videoHeight;
+         canvas.width = video.videoWidth;
+         canvas.height = video.videoHeight;
+         zoneSize = Math.floor(canvas.width/40);
+         prev_vectors = null;
+         flow.stopCapture();
+         if (has_camera) {
+            flow = new oflow.WebCamFlow(video, zoneSize);
+         } else {
+            flow = new oflow.VideoFlow(video, zoneSize);
+         }
+         flow.onCalculated(handleVectors);
+         flow.startCapture();
+      } else if (numTimes < 30) {
+         numTimes++;
+         setTimeout(matchVideoSize, 100);
+         return;
+      } else {
+         framebuf.width = 640;
+         framebuf.height = 480;
+         canvas.width = 640;
+         canvas.height = 480;
+      }
+      video.removeEventListener('playing', matchVideoSize, false);
+   };
+   video.addEventListener('playing', matchVideoSize, false);
+
 
    function beginClip() {
-      webCamFlow.startCapture();
+      flow.startCapture();
       //setTimeout(endClip, 5000);
    }
 
    function endClip() {
-      webCamFlow.stopCapture();
+      flow.stopCapture();
       distortFrame();
    }
 
@@ -126,7 +135,7 @@ function main() {
 
       var xLoc, yLoc;
       var numsteps, step_u, step_v;
-      var threshold = Math.floor(zoneSize/2);
+      var threshold = Math.floor(zoneSize/3);
       for(var i = 0; i != last_vectors.length; i++)
       {
          xLoc = last_vectors[i].x;
@@ -146,5 +155,20 @@ function main() {
       }
    }
 
+   var has_camera = true;
+
+   function attachTestVideo() {
+      has_camera = false;
+      var source = document.createElement('source');
+      source.setAttribute('src', 'test.mp4');
+      video.appendChild(source);
+      video.load();
+      video.play();
+      flow = new oflow.VideoFlow(video, zoneSize);
+   }
+   
+   flow = new oflow.WebCamFlow(video, zoneSize, attachTestVideo);
+   flow.onCalculated(handleVectors);
    beginClip();
+
 }

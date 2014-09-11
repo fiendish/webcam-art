@@ -25,150 +25,163 @@
  *
  */
 
-function main() {
-   var video = document.getElementById('video');
-   var canvas = document.getElementById('canvas');
-   var ctx = canvas.getContext('2d');
-   var framebuf = document.createElement('canvas');
-   var framebufctx = framebuf.getContext('2d');
-   var numTimes = 0;
-   var last_vectors;
-   var zoneSize = 16;
-   var prev_vectors = null;
-   var flow;
+var last_vectors;
+var zoneSize = 16;
+var threshold = Math.floor(zoneSize/3);
+var prev_vectors = null;
+var flow;
+var has_camera = true;
+var stretch = 2;
 
-   function handleVectors (direction) {
-      last_vectors = direction.zones;
+var video;
+var canvas;
+var ctx;
+var framebuf;
+var framebufctx;
+var numTimes;
 
-      // smooth the motion a bit
-      if (prev_vectors != null) {
-         for (var i = 0; i < last_vectors.length; ++i) {
-            last_vectors[i].u = (last_vectors[i].u + prev_vectors[i].u)/2;
-            last_vectors[i].v = (last_vectors[i].v + prev_vectors[i].v)/2;
-         }
-      }
-      prev_vectors = JSON.parse(JSON.stringify(last_vectors));
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      distortFrame();
-
-      /*
-      // draw vectors
-      for(var i = 0; i < last_vectors.length; ++i) {
-         var zone = last_vectors[i];
-         ctx.strokeStyle = "#FF0000"
-         ctx.beginPath();
-         ctx.moveTo(zone.x,zone.y);
-         ctx.lineTo((zone.x - zone.u), zone.y + zone.v);
-         ctx.stroke();
-      }
-      */
-   }
-
-   // wait for the video to start playing so that we can see 
-   // what dimensions the camera has
-   var matchVideoSize = function() {
-      if (video.videoHeight != 0 && video.videoWidth != 0) {
-         framebuf.width = video.videoWidth;
-         framebuf.height = video.videoHeight;
-         canvas.width = video.videoWidth;
-         canvas.height = video.videoHeight;
-         zoneSize = Math.floor(canvas.width/40);
-         prev_vectors = null;
-         flow.stopCapture();
-         if (has_camera) {
-            flow = new oflow.WebCamFlow(video, zoneSize);
-         } else {
-            flow = new oflow.VideoFlow(video, zoneSize);
-         }
-         flow.onCalculated(handleVectors);
-         flow.startCapture();
-      } else if (numTimes < 30) {
-         numTimes++;
-         setTimeout(matchVideoSize, 100);
-         return;
-      } else {
-         framebuf.width = 640;
-         framebuf.height = 480;
-         canvas.width = 640;
-         canvas.height = 480;
-      }
-      video.removeEventListener('playing', matchVideoSize, false);
-   };
-   video.addEventListener('playing', matchVideoSize, false);
-
-
-   function beginClip() {
-      flow.startCapture();
-      //setTimeout(endClip, 5000);
-   }
-
-   function endClip() {
-      flow.stopCapture();
-      distortFrame();
-   }
-
-   function hypot(var1, var2) {
-     return Math.sqrt(var1*var1 + var2*var2);
-   }
-
-   // for sorting the motion vectors by length
-   function hypot_compare(a,b) {
-     if (a.hypot < b.hypot)
-        return -1;
-     if (a.hypot > b.hypot)
-       return 1;
-     return 0;
-   }
-
-   function distortFrame() {
-      framebufctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-      //ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-      var completeImage = new Uint32Array(framebufctx.getImageData(0, 0, framebuf.width, framebuf.height).data.buffer);
-      var cellData = ctx.createImageData(2*zoneSize+1, 2*zoneSize+1);
-
-      for(var i = 0; i != last_vectors.length; i++)
-      {
-         last_vectors[i].hypot = hypot(last_vectors[i].u, last_vectors[i].v);
-      }
-      last_vectors.sort(hypot_compare);
-
-      var xLoc, yLoc;
-      var numsteps, step_u, step_v;
-      var threshold = Math.floor(zoneSize/3);
-      for(var i = 0; i != last_vectors.length; i++)
-      {
-         xLoc = last_vectors[i].x;
-         yLoc = last_vectors[i].y;
-         cellData.data.set(new Uint8ClampedArray(getImageDataFaster(xLoc-zoneSize, yLoc-zoneSize, 2*zoneSize+1, 2*zoneSize+1, video.videoWidth, video.videoHeight, completeImage).buffer));
-         ctx.putImageData(cellData, xLoc-zoneSize, yLoc-zoneSize);
-         if (Math.abs(last_vectors[i].u) >= threshold || Math.abs(last_vectors[i].v) >= threshold) 
-         {
-            numsteps = hypot(last_vectors[i].u, last_vectors[i].v);
-            step_u = (last_vectors[i].u / numsteps);
-            step_v = (last_vectors[i].v / numsteps);
-            for (var step = 1; step < (numsteps*2); step++)
-            {
-               ctx.putImageData(cellData, xLoc-zoneSize+(step*step_u), yLoc-zoneSize+(step*step_v));
-            }
-         }
-      }
-   }
-
-   var has_camera = true;
-
-   function attachTestVideo() {
-      has_camera = false;
-      var source = document.createElement('source');
-      source.setAttribute('src', 'test.mp4');
-      video.appendChild(source);
-      video.load();
-      video.play();
+function setZoneSize (zs) {
+   zoneSize = zs;
+   prev_vectors = null;
+   flow.stopCapture();
+   if (has_camera) {
+      flow = new oflow.WebCamFlow(video, zoneSize);
+   } else {
       flow = new oflow.VideoFlow(video, zoneSize);
    }
-   
+   flow.onCalculated(handleVectors);
+   flow.startCapture();
+}
+
+function handleVectors (direction) {
+   last_vectors = direction.zones;
+
+   // smooth the motion a bit
+   if (prev_vectors != null) {
+      for (var i = 0; i < last_vectors.length; ++i) {
+         last_vectors[i].u = (last_vectors[i].u + prev_vectors[i].u)/2;
+         last_vectors[i].v = (last_vectors[i].v + prev_vectors[i].v)/2;
+      }
+   }
+   prev_vectors = JSON.parse(JSON.stringify(last_vectors));
+
+   ctx.clearRect(0, 0, canvas.width, canvas.height);
+   distortFrame();
+
+   /*
+   // draw vectors
+   for(var i = 0; i < last_vectors.length; ++i) {
+      var zone = last_vectors[i];
+      ctx.strokeStyle = "#FF0000"
+      ctx.beginPath();
+      ctx.moveTo(zone.x,zone.y);
+      ctx.lineTo((zone.x - zone.u), zone.y + zone.v);
+      ctx.stroke();
+   }
+   */
+}
+
+// wait for the video to start playing so that we can see 
+// what dimensions the camera has
+var matchVideoSize = function() {
+   if (video.videoHeight != 0 && video.videoWidth != 0) {
+      framebuf.width = video.videoWidth;
+      framebuf.height = video.videoHeight;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      setZoneSize(Math.floor(canvas.width/40));
+      threshold = Math.floor(zoneSize/3);
+   } else if (numTimes < 30) {
+      numTimes++;
+      setTimeout(matchVideoSize, 100);
+      return;
+   } else {
+      framebuf.width = 640;
+      framebuf.height = 480;
+      canvas.width = 640;
+      canvas.height = 480;
+   }
+   video.removeEventListener('playing', matchVideoSize, false);
+};
+
+function beginClip() {
+   flow.startCapture();
+   //setTimeout(endClip, 5000);
+}
+
+function endClip() {
+   flow.stopCapture();
+   distortFrame();
+}
+
+function hypot(var1, var2) {
+  return Math.sqrt(var1*var1 + var2*var2);
+}
+
+// for sorting the motion vectors by length
+function hypot_compare(a,b) {
+  if (a.hypot < b.hypot)
+     return -1;
+  if (a.hypot > b.hypot)
+    return 1;
+  return 0;
+}
+
+function distortFrame() {
+   framebufctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+   //ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+   var completeImage = new Uint32Array(framebufctx.getImageData(0, 0, framebuf.width, framebuf.height).data.buffer);
+   var cellData = ctx.createImageData(2*zoneSize+1, 2*zoneSize+1);
+
+   for(var i = 0; i != last_vectors.length; i++)
+   {
+      last_vectors[i].hypot = hypot(last_vectors[i].u, last_vectors[i].v);
+   }
+   last_vectors.sort(hypot_compare);
+
+   var xLoc, yLoc;
+   var numsteps, step_u, step_v;
+   for(var i = 0; i != last_vectors.length; i++)
+   {
+      xLoc = last_vectors[i].x;
+      yLoc = last_vectors[i].y;
+      cellData.data.set(new Uint8ClampedArray(getImageDataFaster(xLoc-zoneSize, yLoc-zoneSize, 2*zoneSize+1, 2*zoneSize+1, video.videoWidth, video.videoHeight, completeImage).buffer));
+      ctx.putImageData(cellData, xLoc-zoneSize, yLoc-zoneSize);
+      if (Math.abs(last_vectors[i].u) >= threshold || Math.abs(last_vectors[i].v) >= threshold) 
+      {
+         numsteps = hypot(last_vectors[i].u, last_vectors[i].v);
+         step_u = (last_vectors[i].u / numsteps);
+         step_v = (last_vectors[i].v / numsteps);
+         for (var step = 1; step < (numsteps*stretch); step++)
+         {
+            ctx.putImageData(cellData, xLoc-zoneSize+(step*step_u), yLoc-zoneSize+(step*step_v));
+         }
+      }
+   }
+}
+
+function attachTestVideo() {
+   has_camera = false;
+   var source = document.createElement('source');
+   source.setAttribute('src', 'test.mp4');
+   video.appendChild(source);
+   video.load();
+   video.play();
+   flow = new oflow.VideoFlow(video, zoneSize);
+}
+
+
+function main() {
+   video = document.getElementById('video');
+   canvas = document.getElementById('canvas');
+   ctx = canvas.getContext('2d');
+   framebuf = document.createElement('canvas');
+   framebufctx = framebuf.getContext('2d');
+   numTimes = 0;
+
+   video.addEventListener('playing', matchVideoSize, false);
+
    flow = new oflow.WebCamFlow(video, zoneSize, attachTestVideo);
    flow.onCalculated(handleVectors);
    beginClip();
-
 }

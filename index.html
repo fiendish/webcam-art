@@ -12,6 +12,22 @@
       // @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later
       main();
       // @license-end
-   </script>
+   </script><BR>
+   <form style="color:white;" onsubmit="return false" oninput="zoneSizeOutput.value = zoneSizeSlider.valueAsNumber; setZoneSize(zoneSizeSlider.valueAsNumber);">
+      <label for="zoneSizeInput">Block Size</label>
+      <input name="zoneSizeSlider" id="zoneSizeInput" type="range" min="4" max="64" value="16" step="4"> 
+      <output for="zoneSizeInput" name=zoneSizeOutput>16</output>
+   </form>
+   <form style="color:white;" onsubmit="return false" oninput="thresholdOutput.value = thresholdSlider.valueAsNumber; threshold = thresholdSlider.valueAsNumber;">
+      <label for="thresholdInput">Motion Threshold</label>
+      <input name="thresholdSlider" id="thresholdInput" type="range" min="0" max="15" value="5" step="1"> 
+      <output for="thresholdInput" name=thresholdOutput>5</output>
+   </form>
+   <form style="color:white;" onsubmit="return false" oninput="stretchOutput.value = stretchSlider.valueAsNumber; stretch = stretchSlider.valueAsNumber;">
+      <label for="stretchInput">Motion Stretch</label>
+      <input name="stretchSlider" id="stretchInput" type="range" min="0" max="6" value="2" step="1"> 
+      <output for="stretchInput" name=stretchOutput>2</output>
+   </form>
+
 </body>
 </html>

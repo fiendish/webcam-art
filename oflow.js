@@ -327,6 +327,7 @@ function VideoFlow(defaultVideoTag, zoneSize) {
     };
     this.getWidth = function () { return width; };
     this.getHeight = function () { return height; };
+    this.setZoneSize = function(size) { calculator = new FlowCalculator(size || 8); };
 }
 
 },{"./flowCalculator":3}],7:[function(_dereq_,module,exports){
@@ -419,6 +420,9 @@ function WebCamFlow(defaultVideoTag, zoneSize, fallBack) {
         if (videoTag) { videoTag.pause(); }
         if (localStream) { localStream.stop(); }
     };
+    this.setZoneSize = function(size) {
+        if (videoFlow) { videoFlow.setZoneSize(size); };
+    }
 }
 
 },{"./videoFlow":6}]},{},[5])

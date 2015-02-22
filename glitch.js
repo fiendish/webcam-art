@@ -25,7 +25,7 @@
  *
  */
 
-var last_vectors;
+var current_vectors;
 var zoneSize = 16;
 var threshold = Math.floor(zoneSize/3);
 var prev_vectors = null;
@@ -54,31 +54,23 @@ function setZoneSize (zs) {
 }
 
 function handleVectors (direction) {
-   last_vectors = direction.zones;
-
-   // smooth the motion a bit
-   if (prev_vectors != null) {
-      for (var i = 0; i < last_vectors.length; ++i) {
-         last_vectors[i].u = (last_vectors[i].u + prev_vectors[i].u)/2;
-         last_vectors[i].v = (last_vectors[i].v + prev_vectors[i].v)/2;
-      }
+   // It seems like oflow.js commonly returns 0,0 frame vectors because it finishes 
+   // processing before getting another video frame, so it compares 
+   // two identical frames. So punt if we see that.
+   var zone, total_u = 0, total_v = 0;
+   for (var i = 0; i < direction.zones.length; ++i) {
+      zone = direction.zones[i];
+      total_u += zone.u;
+      total_v += zone.v;
    }
-   prev_vectors = JSON.parse(JSON.stringify(last_vectors));
+   if (total_u == 0 && total_v == 0) {
+      return;
+   }
+   
+   current_vectors = direction.zones;
 
    ctx.clearRect(0, 0, canvas.width, canvas.height);
    distortFrame();
-
-   /*
-   // draw vectors
-   for(var i = 0; i < last_vectors.length; ++i) {
-      var zone = last_vectors[i];
-      ctx.strokeStyle = "#FF0000"
-      ctx.beginPath();
-      ctx.moveTo(zone.x,zone.y);
-      ctx.lineTo((zone.x - zone.u), zone.y + zone.v);
-      ctx.stroke();
-   }
-   */
 }
 
 // wait for the video to start playing so that we can see 
@@ -129,29 +121,30 @@ function hypot_compare(a,b) {
 
 function distortFrame() {
    framebufctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-   //ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+   ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
    var completeImage = new Uint32Array(framebufctx.getImageData(0, 0, framebuf.width, framebuf.height).data.buffer);
    var cellData = ctx.createImageData(2*zoneSize+1, 2*zoneSize+1);
 
-   for(var i = 0; i != last_vectors.length; i++)
+   // sort blocks by motion distance
+   for(var i = 0; i != current_vectors.length; i++)
    {
-      last_vectors[i].hypot = hypot(last_vectors[i].u, last_vectors[i].v);
+      current_vectors[i].hypot = hypot(current_vectors[i].u, current_vectors[i].v);
    }
-   last_vectors.sort(hypot_compare);
+   current_vectors.sort(hypot_compare);
 
    var xLoc, yLoc;
    var numsteps, step_u, step_v;
-   for(var i = 0; i != last_vectors.length; i++)
+   for(var i = 0; i != current_vectors.length; i++)
    {
-      xLoc = last_vectors[i].x;
-      yLoc = last_vectors[i].y;
+      xLoc = current_vectors[i].x;
+      yLoc = current_vectors[i].y;
       cellData.data.set(new Uint8ClampedArray(getImageDataFaster(xLoc-zoneSize, yLoc-zoneSize, 2*zoneSize+1, 2*zoneSize+1, video.videoWidth, video.videoHeight, completeImage).buffer));
       ctx.putImageData(cellData, xLoc-zoneSize, yLoc-zoneSize);
-      if (Math.abs(last_vectors[i].u) >= threshold || Math.abs(last_vectors[i].v) >= threshold) 
+      if (Math.abs(current_vectors[i].u) >= threshold || Math.abs(current_vectors[i].v) >= threshold) 
       {
-         numsteps = hypot(last_vectors[i].u, last_vectors[i].v);
-         step_u = (last_vectors[i].u / numsteps);
-         step_v = (last_vectors[i].v / numsteps);
+         numsteps = hypot(current_vectors[i].u, current_vectors[i].v);
+         step_u = (current_vectors[i].u / numsteps);
+         step_v = (current_vectors[i].v / numsteps);
          for (var step = 1; step < (numsteps*stretch); step++)
          {
             ctx.putImageData(cellData, xLoc-zoneSize+(step*step_u), yLoc-zoneSize+(step*step_v));

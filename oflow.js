@@ -1,120 +1,34 @@
-/*
- * @licstart  The following is the entire license notice for the 
- *  JavaScript code in this page.
- *
- * Copyright (c) 2013 Andrei Kashcha (anvaka@gmail.com)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this 
- * software and associated documentation files (the "Software"), to deal in the Software 
- * without restriction, including without limitation the rights to use, copy, modify, merge, 
- * publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
- * to whom the Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all copies or 
- * substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
- * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE 
- * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- *
- * @licend  The above is the entire license notice
- * for the JavaScript code in this page.
- *
- */
+/*Copyright (c) 2013 Andrei Kashcha (anvaka@gmail.com)
 
-/*
-oflow.js - optical flow detection in JavaScript
-===============================================
-I made this little toy just for fun when I was traveling and had really long flight. The library allows you to detect optical flow in a video.
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the "Software"), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, merge, 
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+to whom the Software is furnished to do so, subject to the following conditions:
 
-Here is an [optical flow detection demo](http://anvaka.github.com/oflow/demo/raw/index.html) which lets you to control a ball and see movements in each zone of the video.
+The above copyright notice and this permission notice shall be included in all copies or 
+substantial portions of the Software.
 
-And this little [Ping Pong game](http://anvaka.github.com/oflow/demo/pingpong/index.html) was also created on a plane. Right bar is controlled by the webcamera. Move your hand slowly up and down, to change the position of the right bar. Just moe your hands slowly do it gradually. Left bar is controlled by computer. 
-
-I didn't have time to do the 'tutorial' or proper error handling, I'm sorry if it wouldn't work for you. Please [let me know](mailto:anvaka@gmail.com).
-
-Usage
------
-Include [/dist/oflow.js](https://github.com/anvaka/oflow/blob/master/dist/oflow.js) into your page.
-
-To detect flow from the webcamera:
-```javascript
-var flow = new oflow.WebCamFlow();
-// Every time when optical flow is calculated
-// call the passed in callback:
-flow.onCalculated(function (direction) {
-    // direction is an object which describes current flow:
-    // direction.u, direction.v {floats} general flow vector
-    // direction.zones {Array} is a collection of flowZones. 
-    // Each flow zone describes optical flow direction inside of it.
-    // flowZone : {
-    //  x, y // zone center
-    //  u, v // vector of flow in the zone
-    // }
-});
-// Starts capturing the flow from webcamera:
-flow.startCapture();
-// once you are done capturing call
-flow.stopCapture();
-```
-To detect flow from ```<video>``` element:
-```javascript
-var flow = new oflow.VideoFlow(videoDomElement);
-// the remaining API is the same as in the WebCamFlow exapmle above.
-```
-
-```videoDomElement``` is required argument.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE 
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+DEALINGS IN THE SOFTWARE.
 */
-
-(function (root, factory) {
-    'use strict';
-
-    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js,
-    // Rhino, and plain browser loading.
-    if (typeof define === 'function' && define.amd) {
-        define(['exports'], factory);
-    } else if (typeof exports !== 'undefined') {
-        factory(exports);
-    } else {
-        return factory((root.oflow = {}));
-    }
-}(this, function (exports) {
-// import /Users/matt/Documents/Projects/oflow/src/flowZone.js
-var FlowZone;
-(function (__localScope__) {
-  FlowZone = __localScope__.FlowZone;
-}(function flowZone_js() {
-
-function FlowZone(x, y, u, v) {
-    this.x = x;
-    this.y = y;
-    this.u = u;
-    this.v = v;
-}
-return { 
- FlowZone : FlowZone
-};
-}()));
-// import /Users/matt/Documents/Projects/oflow/src/flowCalculator.js
-var FlowCalculator;
-(function (__localScope__) {
-  FlowCalculator = __localScope__.FlowCalculator;
-}(function flowCalculator_js() {
-/*global FlowZone */
+!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.oflow=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 /*jslint sloppy: true, vars: true, plusplus: true, white: true */
 
+var FlowZone = _dereq_('./flowZone');
+
+module.exports = FlowCalculator;
 
 /**
  * The heart of the optical flow detection. Implements Lucas-Kande method:
  * http://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method
- * Current implementation is not extremely tolerant to garbage collector. 
- * This could be imporoved...
+ * Current implementation is not extremely tolerant to garbage collector.
+ * This could be improved...
  */
-
-
 function FlowCalculator(step) {
     this.step = step || 8;
 }
@@ -175,15 +89,12 @@ FlowCalculator.prototype.calculate = function (oldImage, newImage, width, height
                 }
             }
 
-            /*if (-winStep < u && u < winStep &&
+            if (-winStep < u && u < winStep &&
                 -winStep < v && v < winStep) {
-                */
-             u = Math.min(Math.max(-winStep, u), winStep);
-             v = Math.min(Math.max(-winStep, v), winStep);
-             uu += u;
-             vv += v;
-             zones.push(new FlowZone(globalX, globalY, u, v));
-           // }
+                uu += u;
+                vv += v;
+                zones.push(new FlowZone(globalX, globalY, u, v));
+            }
         }
     }
 
@@ -193,18 +104,13 @@ FlowCalculator.prototype.calculate = function (oldImage, newImage, width, height
         v : vv / zones.length
     };
 };
-exports.FlowCalculator = FlowCalculator;
-return { 
- FlowCalculator : FlowCalculator
-};
-}()));
-// import /Users/matt/Documents/Projects/oflow/src/canvasFlow.js
-var CanvasFlow;
-(function (__localScope__) {
-  CanvasFlow = __localScope__.CanvasFlow;
-}(function canvasFlow_js() {
-/*global window, FlowCalculator */
 
+},{"./flowZone":4}],2:[function(_dereq_,module,exports){
+/*global window,  */
+
+var FlowCalculator = _dereq_('./flowCalculator.js');
+
+module.exports = CanvasFlow;
 
 /**
  * A high level interface to capture optical flow from the <canvas> tag.
@@ -212,13 +118,13 @@ var CanvasFlow;
  *
  * Usage example:
  *  var flow = new VideoFlow();
- * 
+ *
  *  // Every time when optical flow is calculated
  *  // call the passed in callback:
  *  flow.onCalculated(function (direction) {
  *      // direction is an object which describes current flow:
  *      // direction.u, direction.v {floats} general flow vector
- *      // direction.zones {Array} is a collection of flowZones. 
+ *      // direction.zones {Array} is a collection of flowZones.
  *      //  Each flow zone describes optical flow direction inside of it.
  *  });
  *  // Starts capturing the flow from webcamer:
@@ -226,8 +132,6 @@ var CanvasFlow;
  *  // once you are done capturing call
  *  flow.stopCapture();
  */
-
- 
 function CanvasFlow(defaultCanvasTag, zoneSize) {
     var calculatedCallbacks = [],
         canvas = defaultCanvasTag,
@@ -237,7 +141,7 @@ function CanvasFlow(defaultCanvasTag, zoneSize) {
         oldImage,
         loopId,
         calculator = new FlowCalculator(zoneSize || 8),
-        
+
         requestAnimFrame = window.requestAnimationFrame       ||
                            window.webkitRequestAnimationFrame ||
                            window.mozRequestAnimationFrame    ||
@@ -251,14 +155,14 @@ function CanvasFlow(defaultCanvasTag, zoneSize) {
         getCurrentPixels = function () {
             return ctx.getImageData(0, 0, width, height).data;
         },
-        calculate = function () { 
+        calculate = function () {
             var newImage = getCurrentPixels();
             if (oldImage && newImage) {
                 var zones = calculator.calculate(oldImage, newImage, width, height);
                 calculatedCallbacks.forEach(function (callback) {
                     callback(zones);
                 });
-            } 
+            }
             oldImage = newImage;
         },
 
@@ -267,9 +171,9 @@ function CanvasFlow(defaultCanvasTag, zoneSize) {
             height = canvas.height;
             ctx = canvas.getContext('2d');
         },
-        animloop = function () { 
+        animloop = function () {
             if (isCapturing) {
-                loopId = requestAnimFrame(animloop); 
+                loopId = requestAnimFrame(animloop);
                 calculate();
             }
         };
@@ -296,18 +200,33 @@ function CanvasFlow(defaultCanvasTag, zoneSize) {
     this.getWidth = function () { return width; };
     this.getHeight = function () { return height; };
 }
-exports.CanvasFlow = CanvasFlow;
-return { 
- CanvasFlow : CanvasFlow
-};
-}()));
-// import /Users/matt/Documents/Projects/oflow/src/videoFlow.js
-var VideoFlow;
-(function (__localScope__) {
-  VideoFlow = __localScope__.VideoFlow;
-}(function videoFlow_js() {
-/*global window, FlowCalculator */
 
+},{"./flowCalculator.js":3}],3:[function(_dereq_,module,exports){
+module.exports=_dereq_(1)
+},{"./flowZone":4}],4:[function(_dereq_,module,exports){
+module.exports = FlowZone;
+
+function FlowZone(x, y, u, v) {
+    this.x = x;
+    this.y = y;
+    this.u = u;
+    this.v = v;
+}
+
+},{}],5:[function(_dereq_,module,exports){
+module.exports = {
+  WebCamFlow: _dereq_('./webcamFlow'),
+  VideoFlow: _dereq_('./videoFlow'),
+  CanvasFlow: _dereq_('./canvasFlow'),
+  FlowZone: _dereq_('./flowZone'),
+  FlowCalculator: _dereq_('./FlowCalculator')
+};
+
+},{"./FlowCalculator":1,"./canvasFlow":2,"./flowZone":4,"./videoFlow":6,"./webcamFlow":7}],6:[function(_dereq_,module,exports){
+/*global window */
+
+var FlowCalculator = _dereq_('./flowCalculator');
+module.exports = VideoFlow;
 
 /**
  * A high level interface to capture optical flow from the <video> tag.
@@ -315,13 +234,13 @@ var VideoFlow;
  *
  * Usage example:
  *  var flow = new VideoFlow();
- * 
+ *
  *  // Every time when optical flow is calculated
  *  // call the passed in callback:
  *  flow.onCalculated(function (direction) {
  *      // direction is an object which describes current flow:
  *      // direction.u, direction.v {floats} general flow vector
- *      // direction.zones {Array} is a collection of flowZones. 
+ *      // direction.zones {Array} is a collection of flowZones.
  *      //  Each flow zone describes optical flow direction inside of it.
  *  });
  *  // Starts capturing the flow from webcamer:
@@ -329,8 +248,6 @@ var VideoFlow;
  *  // once you are done capturing call
  *  flow.stopCapture();
  */
-
- 
 function VideoFlow(defaultVideoTag, zoneSize) {
     var calculatedCallbacks = [],
         canvas,
@@ -341,7 +258,7 @@ function VideoFlow(defaultVideoTag, zoneSize) {
         oldImage,
         loopId,
         calculator = new FlowCalculator(zoneSize || 8),
-        
+
         requestAnimFrame = window.requestAnimationFrame       ||
                            window.webkitRequestAnimationFrame ||
                            window.mozRequestAnimationFrame    ||
@@ -364,14 +281,14 @@ function VideoFlow(defaultVideoTag, zoneSize) {
                 return imgd.data;
             }
         },
-        calculate = function () { 
+        calculate = function () {
             var newImage = getCurrentPixels();
             if (oldImage && newImage) {
                 var zones = calculator.calculate(oldImage, newImage, width, height);
                 calculatedCallbacks.forEach(function (callback) {
                     callback(zones);
                 });
-            } 
+            }
             oldImage = newImage;
         },
 
@@ -382,9 +299,9 @@ function VideoFlow(defaultVideoTag, zoneSize) {
             if (!canvas) { canvas = window.document.createElement('canvas'); }
             ctx = canvas.getContext('2d');
         },
-        animloop = function () { 
+        animloop = function () {
             if (isCapturing) {
-                loopId = requestAnimFrame(animloop); 
+                loopId = requestAnimFrame(animloop);
                 calculate();
             }
         };
@@ -411,15 +328,12 @@ function VideoFlow(defaultVideoTag, zoneSize) {
     this.getWidth = function () { return width; };
     this.getHeight = function () { return height; };
 }
-exports.VideoFlow = VideoFlow;
-return { 
- VideoFlow : VideoFlow
-};
-}()));
-// import /Users/matt/Documents/Projects/oflow/src/webcamFlow.js
-(function webcamFlow_js() {
-/*global navigator, window, VideoFlow */
 
+},{"./flowCalculator":3}],7:[function(_dereq_,module,exports){
+/*global navigator, window */
+
+var VideoFlow = _dereq_('./videoFlow');
+module.exports = WebCamFlow;
 
 /**
  * A high level interface to capture optical flow from the web camera.
@@ -430,13 +344,13 @@ return {
  *
  * Usage example:
  *  var flow = new WebCamFlow();
- * 
+ *
  *  // Every time when optical flow is calculated
  *  // call the passed in callback:
  *  flow.onCalculated(function (direction) {
  *      // direction is an object which describes current flow:
  *      // direction.u, direction.v {floats} general flow vector
- *      // direction.zones {Array} is a collection of flowZones. 
+ *      // direction.zones {Array} is a collection of flowZones.
  *      //  Each flow zone describes optical flow direction inside of it.
  *  });
  *  // Starts capturing the flow from webcamer:
@@ -444,8 +358,7 @@ return {
  *  // once you are done capturing call
  *  flow.stopCapture();
  */
- 
-function WebCamFlow(defaultVideoTag, zoneSize, fallBack) {
+function WebCamFlow(defaultVideoTag, zoneSize) {
     var videoTag,
         isCapturing,
         localStream,
@@ -453,11 +366,9 @@ function WebCamFlow(defaultVideoTag, zoneSize, fallBack) {
         flowCalculatedCallback,
         videoFlow,
         onWebCamFail = function onWebCamFail(e) {
-            if (fallBack) {
-               fallBack();
-            } else if(e.code === 1){
+            if(e.code === 1){
                 window.alert('You have denied access to your camera. I cannot do anything.');
-            } else { 
+            } else {
                 window.alert('getUserMedia() is not supported in your browser.');
             }
         },
@@ -472,7 +383,7 @@ function WebCamFlow(defaultVideoTag, zoneSize, fallBack) {
                 videoTag.setAttribute('autoplay', true);
                 videoFlow = new VideoFlow(videoTag, zoneSize);
             }
-            
+
             navigator.getUserMedia({ video: true }, function(stream) {
                 isCapturing = true;
                 localStream = stream;
@@ -490,7 +401,7 @@ function WebCamFlow(defaultVideoTag, zoneSize, fallBack) {
                                  navigator.mozGetUserMedia ||
                                  navigator.msGetUserMedia;
     }
-    
+
     // our public API
     this.startCapture = function () {
         if (!isCapturing) {
@@ -507,12 +418,7 @@ function WebCamFlow(defaultVideoTag, zoneSize, fallBack) {
         if (localStream) { localStream.stop(); }
     };
 }
-exports.WebCamFlow = WebCamFlow;
-}());
-// import /Users/matt/Documents/Projects/oflow/src/main.js
-(function main_js() {
 
-
-
-
-}());}));
+},{"./videoFlow":6}]},{},[5])
+(5)
+});

@@ -154,6 +154,8 @@ function attachTestVideo() {
    video.load();
    video.play();
    flow = new oflow.VideoFlow(video, zoneSize);
+   flow.onCalculated(handleVectors);
+   beginClip();
 }
 
 
@@ -168,6 +170,8 @@ function main() {
    video.addEventListener('playing', matchVideoSize, false);
 
    flow = new oflow.WebCamFlow(video, zoneSize, attachTestVideo);
-   flow.onCalculated(handleVectors);
-   beginClip();
+   if (has_camera) {
+       flow.onCalculated(handleVectors);
+       beginClip();
+   }
 }

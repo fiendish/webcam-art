@@ -43,14 +43,7 @@ var numTimes;
 function setZoneSize (zs) {
    zoneSize = zs;
    prev_vectors = null;
-   flow.stopCapture();
-   if (has_camera) {
-      flow = new oflow.WebCamFlow(video, zoneSize);
-   } else {
-      flow = new oflow.VideoFlow(video, zoneSize);
-   }
-   flow.onCalculated(handleVectors);
-   flow.startCapture();
+   flow.setZoneSize(zoneSize);
 }
 
 function handleVectors (direction) {

@@ -398,13 +398,6 @@ function WebCamFlow(defaultVideoTag, zoneSize, fallBack) {
             }, onWebCamFail);
         };
 
-    if (!navigator.getUserMedia) {
-        navigator.getUserMedia = navigator.getUserMedia ||
-                                 navigator.webkitGetUserMedia ||
-                                 navigator.mozGetUserMedia ||
-                                 navigator.msGetUserMedia;
-    }
-
     // our public API
     this.startCapture = function () {
         if (!isCapturing) {

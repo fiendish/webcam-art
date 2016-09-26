@@ -6,8 +6,15 @@
    <script type="text/javascript" src="getimagedata.js"></script>
    <script type="text/javascript" src="glitch.js"></script>
    <link rel="stylesheet" href="//fiendish.github.io/gh-fork-banner/gh.css">
+<style>
+/* Recent Firefox versions (48 and 49, at least) seem to have a default styling bug that makes range inputs invisible. This fixes it. */
+input[type=range] {
+	border: 1px;
+}
+</style>
 </head>
-<body style='color:white;background-color:black;text-align:center;'>
+<body style='background-color:grey'>
+   <center>
 
     Give access to your webcam and have fun.<br>
     Probably works Best in Chrome.<br>
@@ -20,23 +27,46 @@
       main();
       // @license-end
    </script>
+
    <br>
-   <form submit="return false" oninput="zoneSizeOutput.value = zoneSizeSlider.valueAsNumber; setZoneSize(zoneSizeSlider.valueAsNumber);">
-      <label for="zoneSizeInput">Block Size</label>
-      <input name="zoneSizeSlider" id="zoneSizeInput" type="range" min="4" max="64" value="16" step="4"> 
-      <output for="zoneSizeInput" name=zoneSizeOutput>16</output>
-   </form>
-   <form onsubmit="return false" oninput="thresholdOutput.value = thresholdSlider.valueAsNumber; threshold = thresholdSlider.valueAsNumber;">
-      <label for="thresholdInput">Motion Threshold</label>
-      <input name="thresholdSlider" id="thresholdInput" type="range" min="0" max="15" value="5" step="1"> 
-      <output for="thresholdInput" name=thresholdOutput>5</output>
-   </form>
-   <form onsubmit="return false" oninput="stretchOutput.value = stretchSlider.valueAsNumber; stretch = stretchSlider.valueAsNumber;">
-      <label for="stretchInput">Motion Stretch</label>
-      <input name="stretchSlider" id="stretchInput" type="range" min="0" max="6" value="2" step="1"> 
-      <output for="stretchInput" name=stretchOutput>2</output>
+   <form submit="return false" autocomplete="off" oninput="setValues();">
+      <table>
+      <tr>
+      <td><label for="zoneSizeInput">Block Size</label></td>
+      <td><input name="zoneSizeSlider" id="zoneSizeInput" type="range" min="4" max="64" value="16" step="4"></td>
+      <td><output for="zoneSizeInput" id=zoneSizeOutput>16</output></td>
+      </tr>
+      
+      <tr>
+      <td><label for="thresholdInput">Motion Threshold</label></td>
+      <td><input name="thresholdSlider" id="thresholdInput" type="range" min="0" max="15" value="5" step="1"></td>
+      <td><output for="thresholdInput" id=thresholdOutput>5</output></td>
+      </tr>
+      
+      <tr>
+      <td><label for="stretchInput">Motion Stretch</label></td>
+      <td><input name="stretchSlider" id="stretchInput" type="range" min="0" max="6" value="2" step="1"></td>
+      <td><output for="stretchInput" id=stretchOutput>2</output></td>
+      </tr>
+      </table>
    </form>
 
-<span id="gh"><a href="https://github.com/fiendish/webcam-art">Fork&nbsp;me&nbsp;on&nbsp;GitHub...lol</a></span>
+   </center>
+
+   <span id="gh"><a href="https://github.com/fiendish/webcam-art">Fork&nbsp;me&nbsp;on&nbsp;GitHub...lol</a></span>
+
+<script type="text/javascript">
+function setValues() {
+   var zoneSize = document.getElementById('zoneSizeInput').valueAsNumber;
+   document.getElementById('zoneSizeOutput').value = zoneSize; 
+   setZoneSize(zoneSize);
+   
+   threshold = document.getElementById('thresholdInput').valueAsNumber
+   document.getElementById('thresholdOutput').value = threshold;
+   
+   stretch = document.getElementById('stretchInput').valueAsNumber;
+   document.getElementById('stretchOutput').value = stretch; 
+}
+</script>
 </body>
 </html>

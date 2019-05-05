@@ -43,7 +43,9 @@ var numTimes;
 function setZoneSize (zs) {
    zoneSize = zs;
    prev_vectors = null;
-   flow.setZoneSize(zoneSize);
+   if (flow.setZoneSize) {
+       flow.setZoneSize(zoneSize);
+   }
 }
 
 function handleVectors (direction) {
@@ -89,15 +91,6 @@ var matchVideoSize = function() {
    video.removeEventListener('playing', matchVideoSize, false);
 };
 
-function beginClip() {
-   flow.startCapture();
-   //setTimeout(endClip, 5000);
-}
-
-function endClip() {
-   flow.stopCapture();
-   distortFrame();
-}
 
 function hypot(var1, var2) {
   return Math.sqrt(var1*var1 + var2*var2);
@@ -152,10 +145,9 @@ function attachTestVideo() {
    source.setAttribute('src', 'test.mp4');
    video.appendChild(source);
    video.load();
-   video.play();
    flow = new oflow.VideoFlow(video, zoneSize);
    flow.onCalculated(handleVectors);
-   beginClip();
+   flow.startCapture();
 }
 
 
@@ -169,9 +161,7 @@ function main() {
 
    video.addEventListener('playing', matchVideoSize, false);
 
-   flow = new oflow.WebCamFlow(video, zoneSize, attachTestVideo);
-   if (has_camera) {
-       flow.onCalculated(handleVectors);
-       beginClip();
-   }
+   flow = new oflow.WebCamFlow(video, zoneSize, null, attachTestVideo);
+   flow.onCalculated(handleVectors);
+   flow.startCapture();
 }

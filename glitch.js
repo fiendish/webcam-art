@@ -52,16 +52,16 @@ function handleVectors (direction) {
    // It seems like oflow.js commonly returns 0,0 frame vectors because it finishes 
    // processing before getting another video frame, so it compares 
    // two identical frames. So punt if we see that.
-   var zone, total_u = 0, total_v = 0;
+   var allZero = true;
    for (var i = 0; i < direction.zones.length; ++i) {
-      zone = direction.zones[i];
-      total_u += zone.u;
-      total_v += zone.v;
+      if (direction.zones[i].u !== 0 || direction.zones[i].v !== 0) {
+         allZero = false;
+         break;
+      }
    }
-   if (total_u == 0 && total_v == 0) {
+   if (allZero) {
       return;
    }
-   
    current_vectors = direction.zones;
 
    ctx.clearRect(0, 0, canvas.width, canvas.height);

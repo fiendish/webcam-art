@@ -33,6 +33,10 @@ var flow;
 var has_camera = true;
 var stretch = 2;
 
+// Motion vector temporal smoothing
+var motion_history = [];
+var smoothing_frames = 5;
+
 var video;
 var canvas;
 var ctx;
@@ -43,6 +47,7 @@ var numTimes;
 function setZoneSize (zs) {
    zoneSize = zs;
    prev_vectors = null;
+   motion_history = []; // Reset motion history when zone size changes
    if (flow.setZoneSize) {
        flow.setZoneSize(zoneSize);
    }
@@ -62,7 +67,8 @@ function handleVectors (direction) {
    if (allZero) {
       return;
    }
-   current_vectors = direction.zones;
+   
+   current_vectors = temporalSmoothVectors(direction.zones);
 
    ctx.clearRect(0, 0, canvas.width, canvas.height);
    distortFrame();
@@ -91,6 +97,41 @@ var matchVideoSize = function() {
    video.removeEventListener('playing', matchVideoSize, false);
 };
 
+function temporalSmoothVectors(new_vectors) {
+   motion_history.push(new_vectors);
+   if (motion_history.length > smoothing_frames) {
+      motion_history.shift();
+   } else if (motion_history.length < smoothing_frames) {
+      return new_vectors;
+   }
+   
+   var smoothed_vectors = [];
+   for (var i = 0; i < new_vectors.length; i++) {
+      var sum_u = 0, sum_v = 0;
+      var count = 0;
+      
+      for (var frame = 0; frame < motion_history.length; frame++) {
+         if (motion_history[frame][i]) {
+            sum_u += motion_history[frame][i].u;
+            sum_v += motion_history[frame][i].v;
+            count++;
+         }
+      }
+      
+      if (count > 0) {
+         smoothed_vectors.push({
+            x: new_vectors[i].x,
+            y: new_vectors[i].y,
+            u: sum_u / count,
+            v: sum_v / count
+         });
+      } else {
+         smoothed_vectors.push(new_vectors[i]);
+      }
+   }
+   
+   return smoothed_vectors;
+}
 
 function hypot(var1, var2) {
   return Math.sqrt(var1*var1 + var2*var2);
